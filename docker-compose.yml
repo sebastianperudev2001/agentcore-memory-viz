@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   backend:
     build: ./backend
@@ -9,7 +8,6 @@ services:
       - AWS_REGION=${AWS_REGION:-us-east-1}
     volumes:
       - ~/.aws:/root/.aws:ro
-      - ./backend:/app
 
   frontend:
     build: ./frontend
