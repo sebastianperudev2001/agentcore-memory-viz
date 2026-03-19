@@ -10,7 +10,6 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { type: "link" as const, text: "Memory Browser", href: "/memories" },
-  { type: "link" as const, text: "Session Trace", href: "/sessions" },
 ];
 
 interface BreadcrumbItem {
