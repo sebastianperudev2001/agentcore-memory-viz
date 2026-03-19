@@ -12,6 +12,15 @@ import Box from "@cloudscape-design/components/box";
 import Badge from "@cloudscape-design/components/badge";
 import { MemoryRecord } from "@/types";
 
+function formatTimestamp(ts: string | null): string | null {
+  if (!ts) return null;
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return null;
+  }
+}
+
 interface MemoryRecordsPanelProps {
   records: MemoryRecord[];
   loading: boolean;
@@ -64,6 +73,11 @@ export default function MemoryRecordsPanel({
                       {record.recordId}
                     </Box>
                   </SpaceBetween>
+                  {formatTimestamp(record.createdAt) && (
+                    <Box variant="small" color="text-body-secondary">
+                      Created: {formatTimestamp(record.createdAt)}
+                    </Box>
+                  )}
                   <Box>{record.content}</Box>
                 </SpaceBetween>
               </Container>
