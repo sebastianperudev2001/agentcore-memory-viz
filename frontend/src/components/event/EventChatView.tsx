@@ -14,6 +14,15 @@ interface EventChatViewProps {
   onDelete: (eventId: string) => void;
 }
 
+function formatTimestamp(ts: string | null): string | null {
+  if (!ts) return null;
+  try {
+    return new Date(ts).toLocaleString();
+  } catch {
+    return null;
+  }
+}
+
 function ChatBubble({ role, content }: { role: string; content: string }) {
   const normalizedRole = role.toUpperCase();
   const isUser = normalizedRole === "USER" || normalizedRole === "HUMAN";
@@ -77,7 +86,12 @@ export default function EventChatView({
                 />
               }
             >
-              Event: {event.eventId}
+              {(() => {
+                const ts = formatTimestamp(event.timestamp);
+                return ts
+                  ? <><span>Event: {event.eventId}</span> <Box variant="small" color="text-body-secondary" display="inline">{" — "}{ts}</Box></>
+                  : <>Event: {event.eventId}</>;
+              })()}
             </Header>
           }
         >
