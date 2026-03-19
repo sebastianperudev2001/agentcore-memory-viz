@@ -2,22 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
-from .memory import Memory
+from typing import Optional
 
 
 @dataclass
-class SessionTurn:
-    index: int
-    user_input: str
-    agent_output: str
-    memories_read: List[Memory]
-    memories_written: List[Memory]
-
-
-@dataclass
-class Session:
-    id: str
-    agent_id: str
-    started_at: datetime
-    turns: List[SessionTurn]
+class MemorySession:
+    session_id: str
+    actor_id: str
+    memory_id: str
+    created_at: Optional[datetime]

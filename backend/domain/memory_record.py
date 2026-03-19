@@ -6,10 +6,8 @@ from typing import Optional
 
 
 @dataclass
-class Memory:
-    id: str
-    agent_id: str
+class MemoryRecord:
+    record_id: str
     content: str
-    memory_type: str
-    created_at: datetime
-    session_id: Optional[str] = None
+    namespace: str
+    created_at: Optional[datetime]
