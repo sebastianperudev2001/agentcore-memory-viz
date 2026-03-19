@@ -15,7 +15,8 @@ interface EventChatViewProps {
 }
 
 function ChatBubble({ role, content }: { role: string; content: string }) {
-  const isUser = role === "USER";
+  const normalizedRole = role.toUpperCase();
+  const isUser = normalizedRole === "USER" || normalizedRole === "HUMAN";
   return (
     <div
       style={{
@@ -25,6 +26,7 @@ function ChatBubble({ role, content }: { role: string; content: string }) {
       }}
     >
       <div
+        data-testid="chat-bubble"
         style={{
           maxWidth: "75%",
           padding: "8px 12px",
