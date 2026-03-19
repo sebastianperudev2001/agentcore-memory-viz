@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Memory } from "@/types";
+import { MemoryResource } from "@/types";
 import { fetchMemories as apiFetchMemories } from "@/lib/api/memories";
 
 export function useMemories() {
-  const [memories, setMemories] = useState<Memory[]>([]);
+  const [memories, setMemories] = useState<MemoryResource[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMemories = useCallback(async (agentId: string) => {
+  const fetchMemories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setMemories(await apiFetchMemories(agentId));
+      setMemories(await apiFetchMemories());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -21,10 +21,5 @@ export function useMemories() {
     }
   }, []);
 
-  const reset = useCallback(() => {
-    setMemories([]);
-    setError(null);
-  }, []);
-
-  return { memories, loading, error, fetchMemories, reset };
+  return { memories, loading, error, fetchMemories };
 }
