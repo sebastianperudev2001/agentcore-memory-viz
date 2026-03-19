@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import AppShell from "@/components/AppShell";
-import Box from "@cloudscape-design/components/box";
+import SessionList from "@/components/session/SessionList";
 
 export const metadata: Metadata = {
-  title: "Memory Detail — AgentCore Memory Viz",
+  title: "Sessions — AgentCore Memory Viz",
 };
 
 export default async function MemoryDetailPage({
@@ -21,7 +21,7 @@ export default async function MemoryDetailPage({
         { text: id, href: `/memories/${id}` },
       ]}
     >
-      <Box>Memory detail coming soon.</Box>
+      <SessionList memoryId={id} />
     </AppShell>
   );
 }
