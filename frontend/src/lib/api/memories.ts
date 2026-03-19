@@ -1,30 +1,28 @@
-import { Memory } from "@/types";
+import { MemoryResource } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export interface MemoryApiResponse {
+interface MemoryResourceApiResponse {
   id: string;
-  agent_id: string;
-  content: string;
-  memory_type: string;
-  created_at: string;
-  session_id?: string;
+  name: string;
+  status: string;
+  event_expiry_days: number;
+  strategies: string[];
 }
 
-export function mapMemory(raw: MemoryApiResponse): Memory {
+function mapMemoryResource(raw: MemoryResourceApiResponse): MemoryResource {
   return {
     id: raw.id,
-    agentId: raw.agent_id,
-    content: raw.content,
-    type: raw.memory_type,
-    createdAt: raw.created_at,
-    sessionId: raw.session_id,
+    name: raw.name,
+    status: raw.status,
+    eventExpiryDays: raw.event_expiry_days,
+    strategies: raw.strategies,
   };
 }
 
-export async function fetchMemories(agentId: string): Promise<Memory[]> {
-  const res = await fetch(`${BASE_URL}/memories/?agent_id=${encodeURIComponent(agentId)}`);
+export async function fetchMemories(): Promise<MemoryResource[]> {
+  const res = await fetch(`${BASE_URL}/memories/`);
   if (!res.ok) throw new Error(`Failed to fetch memories: ${res.status}`);
-  const data: MemoryApiResponse[] = await res.json();
-  return data.map(mapMemory);
+  const data: MemoryResourceApiResponse[] = await res.json();
+  return data.map(mapMemoryResource);
 }
