@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -26,6 +26,11 @@ class MessageResponse(BaseModel):
     content: str
 
 
+class BranchResponse(BaseModel):
+    name: Optional[str] = None
+    root_event_id: Optional[str] = None
+
+
 class EventResponse(BaseModel):
     event_id: str
     memory_id: str
@@ -33,6 +38,8 @@ class EventResponse(BaseModel):
     session_id: str
     messages: List[MessageResponse]
     timestamp: Optional[datetime] = None
+    branch: Optional[BranchResponse] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class MemoryRecordResponse(BaseModel):

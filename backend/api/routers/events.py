@@ -4,7 +4,7 @@ from typing import List
 
 from fastapi import APIRouter, Query, Response
 
-from api.schemas import EventResponse, MessageResponse
+from api.schemas import BranchResponse, EventResponse, MessageResponse
 from application.event_service import EventService
 from infrastructure.agentcore_client import AgentCoreRepository
 
@@ -16,6 +16,12 @@ def get_service() -> EventService:
 
 
 def _map_event(event) -> EventResponse:
+    branch = None
+    if event.branch:
+        branch = BranchResponse(
+            name=event.branch.name,
+            root_event_id=event.branch.root_event_id,
+        )
     return EventResponse(
         event_id=event.event_id,
         memory_id=event.memory_id,
@@ -23,6 +29,8 @@ def _map_event(event) -> EventResponse:
         session_id=event.session_id,
         messages=[MessageResponse(role=m.role, content=m.content) for m in event.messages],
         timestamp=event.timestamp,
+        branch=branch,
+        metadata=event.metadata,
     )
 
 
