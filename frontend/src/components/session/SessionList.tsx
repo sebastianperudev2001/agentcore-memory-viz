@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import FormField from "@cloudscape-design/components/form-field";
-import Input from "@cloudscape-design/components/input";
-import Button from "@cloudscape-design/components/button";
 import Alert from "@cloudscape-design/components/alert";
 import Spinner from "@cloudscape-design/components/spinner";
 import Table from "@cloudscape-design/components/table";
@@ -19,12 +16,18 @@ import { MemorySession } from "@/types";
 
 interface SessionListProps {
   memoryId: string;
+  actorId: string;
 }
 
-export default function SessionList({ memoryId }: SessionListProps) {
-  const [actorId, setActorId] = useState("");
+export default function SessionList({ memoryId, actorId }: SessionListProps) {
   const { sessions, loading, error, fetchSessions } = useSessions(memoryId);
   const router = useRouter();
+
+  useEffect(() => {
+    if (actorId) {
+      fetchSessions(actorId);
+    }
+  }, [actorId, fetchSessions]);
 
   const { items, collectionProps, paginationProps } = useCollection(sessions, {
     pagination: { pageSize: 10 },
@@ -55,28 +58,9 @@ export default function SessionList({ memoryId }: SessionListProps) {
 
   return (
     <ContentLayout
-      header={<Header variant="h1">Sessions for {memoryId}</Header>}
+      header={<Header variant="h1">Sessions for {memoryId} / {actorId}</Header>}
     >
       <SpaceBetween direction="vertical" size="l">
-        <SpaceBetween direction="horizontal" size="s">
-          <FormField label="Actor ID">
-            <Input
-              value={actorId}
-              onChange={({ detail }) => setActorId(detail.value)}
-              placeholder="Enter actor ID"
-            />
-          </FormField>
-          <div style={{ paddingTop: "24px" }}>
-            <Button
-              variant="primary"
-              onClick={() => fetchSessions(actorId)}
-              disabled={!actorId || loading}
-            >
-              Load Sessions
-            </Button>
-          </div>
-        </SpaceBetween>
-
         {error && <Alert type="error">{error}</Alert>}
 
         {loading ? (
@@ -90,12 +74,12 @@ export default function SessionList({ memoryId }: SessionListProps) {
             onRowClick={({ detail }) => {
               const s = detail.item as MemorySession;
               router.push(
-                `/memories/${memoryId}/sessions/${s.sessionId}?actorId=${encodeURIComponent(s.actorId)}`
+                `/memories/${memoryId}/actors/${encodeURIComponent(actorId)}/sessions/${s.sessionId}`
               );
             }}
             empty={
               <Box textAlign="center">
-                Enter an Actor ID and click Load Sessions.
+                No sessions found for this actor.
               </Box>
             }
           />
