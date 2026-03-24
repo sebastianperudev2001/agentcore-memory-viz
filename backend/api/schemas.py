@@ -47,3 +47,9 @@ class MemoryRecordResponse(BaseModel):
     content: str
     namespace: str
     created_at: Optional[datetime] = None
+
+
+class ActorListResponse(BaseModel):
+    actorIds: List[str]
+    nextToken: Optional[str] = None
+    count: int
