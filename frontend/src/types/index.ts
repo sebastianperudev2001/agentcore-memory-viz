@@ -33,3 +33,9 @@ export interface MemoryRecord {
   namespace: string;
   createdAt: string | null;
 }
+
+export interface ActorListResponse {
+  actorIds: string[];
+  nextToken: string | null;
+  count: number;
+}
