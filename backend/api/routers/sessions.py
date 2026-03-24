@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Query
 
@@ -18,7 +18,7 @@ def get_service() -> SessionService:
 @router.get("/{memory_id}/sessions", response_model=List[MemorySessionResponse])
 async def list_sessions(
     memory_id: str,
-    actor_id: str = Query(..., description="Actor ID to list sessions for"),
+    actor_id: Optional[str] = Query(None, description="Actor ID to filter sessions by"),
 ):
     service = get_service()
     sessions = await service.list_sessions(memory_id, actor_id)
@@ -46,6 +46,6 @@ async def delete_session(
                 root_event_id=e.branch.root_event_id,
             ) if e.branch else None,
             metadata=e.metadata,
-        )
+         )
         for e in deleted_events
     ]
