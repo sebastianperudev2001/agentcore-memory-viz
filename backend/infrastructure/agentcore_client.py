@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -22,6 +23,54 @@ def _parse_dt(value: Optional[str]) -> Optional[datetime]:
         return None
 
 
+def _safe_json_loads(value: str) -> Optional[Any]:
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_content(value: Any) -> str:
+    if value is None:
+        return ""
+
+    if isinstance(value, str):
+        parsed = _safe_json_loads(value)
+        if parsed is not None:
+            return _normalize_content(parsed)
+        return value
+
+    if isinstance(value, list):
+        parts = [_normalize_content(item) for item in value]
+        return "\n".join(part for part in parts if part)
+
+    if isinstance(value, dict):
+        if "text" in value:
+            return _normalize_content(value.get("text"))
+        if "toolUse" in value:
+            return json.dumps(value.get("toolUse"), ensure_ascii=False, default=str)
+        if "toolResult" in value:
+            return json.dumps(value.get("toolResult"), ensure_ascii=False, default=str)
+        return json.dumps(value, ensure_ascii=False, default=str)
+
+    return str(value)
+
+
+def _extract_conversational_message(conv: Dict[str, Any]) -> Message:
+    role = conv.get("role", "")
+    content = conv.get("content", {})
+    text = content.get("text", "") if isinstance(content, dict) else content
+
+    parsed = _safe_json_loads(text) if isinstance(text, str) else None
+    if isinstance(parsed, dict) and isinstance(parsed.get("message"), dict):
+        parsed_message = parsed["message"]
+        role = parsed_message.get("role", role)
+        message_content = _normalize_content(parsed_message.get("content", ""))
+        return Message(role=role, content=message_content)
+
+    return Message(role=role, content=_normalize_content(text))
+
+
 class AgentCoreRepository:
     def __init__(self, region: Optional[str] = None):
         region = region or os.environ.get("AWS_REGION", "us-west-2")
@@ -31,6 +80,7 @@ class AgentCoreRepository:
             aws_session_token=os.environ.get("AWS_SESSION_TOKEN"),
             region_name=region,
         )
+        self.agentcore_client = session.client("bedrock-agentcore", region_name=region)
         self.client = MemoryClient(region_name=region, boto3_session=session)
 
     async def list_memories(self) -> List[MemoryResource]:
@@ -53,6 +103,19 @@ class AgentCoreRepository:
                 )
             )
         return resources
+
+    async def list_actors(
+        self,
+        memory_id: str,
+        max_results: Optional[int] = None,
+        next_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {"memoryId": memory_id}
+        if max_results is not None:
+            kwargs["maxResults"] = max_results
+        if next_token:
+            kwargs["nextToken"] = next_token
+        return self.agentcore_client.list_actors(**kwargs)
 
     async def list_sessions(
         self, memory_id: str, actor_id: str
@@ -90,6 +153,7 @@ class AgentCoreRepository:
             session_id=session_id,
             include_payload=True,
         )
+        print(raw_events)
         return [self._map_event(e) for e in raw_events]
 
     async def get_event(
@@ -101,6 +165,7 @@ class AgentCoreRepository:
             sessionId=session_id,
             eventId=event_id,
         )
+        print(response)
         raw = response.get("event", response) if isinstance(response, dict) else response
         return self._map_event(raw)
 
@@ -158,22 +223,20 @@ class AgentCoreRepository:
 
     @staticmethod
     def _map_event(raw: dict) -> Event:
+        print(raw)
         messages = []
         # Extract payload (conversational messages)
         if "payload" in raw:
             for item in raw["payload"]:
                 if "conversational" in item:
-                    conv = item["conversational"]
-                    content = conv.get("content", {})
-                    text = content.get("text", "")
-                    messages.append(Message(role=conv.get("role", ""), content=text))
+                    messages.append(_extract_conversational_message(item["conversational"]))
+                elif "blob" in item:
+                    messages.append(Message(role="SYSTEM", content=_normalize_content(item["blob"])))
+                else:
+                    messages.append(Message(role="SYSTEM", content=_normalize_content(item)))
         else:
             for msg in raw.get("messages", []):
-                content = msg.get("content", "")
-                if isinstance(content, list):
-                    content = " ".join(
-                        c.get("text", "") for c in content if isinstance(c, dict)
-                    )
+                content = _normalize_content(msg.get("content", ""))
                 messages.append(Message(role=msg.get("role", ""), content=content))
 
         # Parse branch
