@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import ContentLayout from "@cloudscape-design/components/content-layout";
 import Header from "@cloudscape-design/components/header";
@@ -9,7 +9,9 @@ import Alert from "@cloudscape-design/components/alert";
 import Spinner from "@cloudscape-design/components/spinner";
 import Table from "@cloudscape-design/components/table";
 import Pagination from "@cloudscape-design/components/pagination";
+import Button from "@cloudscape-design/components/button";
 import Box from "@cloudscape-design/components/box";
+import Autosuggest from "@cloudscape-design/components/autosuggest";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import { useSessions } from "@/hooks/useSessions";
 import { MemorySession } from "@/types";
@@ -20,8 +22,17 @@ interface SessionListProps {
 }
 
 export default function SessionList({ memoryId, actorId }: SessionListProps) {
+  const [searchValue, setSearchValue] = useState("");
   const { sessions, loading, error, fetchSessions } = useSessions(memoryId);
   const router = useRouter();
+
+  const navigateToSession = (sessionId: string) => {
+    const normalizedSessionId = sessionId.trim();
+    if (!normalizedSessionId) return;
+    router.push(
+      `/memories/${memoryId}/actors/${encodeURIComponent(actorId)}/sessions/${encodeURIComponent(normalizedSessionId)}`
+    );
+  };
 
   useEffect(() => {
     if (actorId) {
@@ -29,8 +40,35 @@ export default function SessionList({ memoryId, actorId }: SessionListProps) {
     }
   }, [actorId, fetchSessions]);
 
-  const { items, collectionProps, paginationProps } = useCollection(sessions, {
-    pagination: { pageSize: 10 },
+  const normalizedSearch = searchValue.trim().toLowerCase();
+
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : Number.NEGATIVE_INFINITY;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : Number.NEGATIVE_INFINITY;
+      return bTime - aTime;
+    });
+  }, [sessions]);
+
+  const filteredSessions = useMemo(() => {
+    if (!normalizedSearch) return sortedSessions;
+    return sortedSessions.filter((session) =>
+      session.sessionId.toLowerCase().includes(normalizedSearch)
+    );
+  }, [sortedSessions, normalizedSearch]);
+
+  const autosuggestOptions = useMemo(() => {
+    const source = normalizedSearch
+      ? sortedSessions.filter((session) =>
+          session.sessionId.toLowerCase().includes(normalizedSearch)
+        )
+      : sortedSessions;
+
+    return source.map((session) => ({ value: session.sessionId }));
+  }, [sortedSessions, normalizedSearch]);
+
+  const { items, collectionProps, paginationProps } = useCollection(filteredSessions, {
+    pagination: { pageSize: 100 },
     sorting: {},
   });
 
@@ -58,10 +96,39 @@ export default function SessionList({ memoryId, actorId }: SessionListProps) {
 
   return (
     <ContentLayout
-      header={<Header variant="h1">Sessions for {memoryId} / {actorId}</Header>}
+      header={
+        <Header
+          variant="h1"
+          actions={
+            <Button
+              iconName="refresh"
+              onClick={() => fetchSessions(actorId)}
+              loading={loading}
+            >
+              Refresh
+            </Button>
+          }
+        >
+          Sessions for {memoryId} / {actorId}
+        </Header>
+      }
     >
       <SpaceBetween direction="vertical" size="l">
         {error && <Alert type="error">{error}</Alert>}
+        <Autosuggest
+          value={searchValue}
+          options={autosuggestOptions}
+          placeholder="Search sessions"
+          enteredTextLabel={(value) => `Use: ${value}`}
+          onChange={({ detail }) => setSearchValue(detail.value)}
+          onSelect={({ detail }) => {
+            setSearchValue(detail.value);
+            if (sessions.some((session) => session.sessionId === detail.value)) {
+              navigateToSession(detail.value);
+            }
+          }}
+          empty="No matching sessions"
+        />
 
         {loading ? (
           <Spinner size="large" />
@@ -73,9 +140,7 @@ export default function SessionList({ memoryId, actorId }: SessionListProps) {
             pagination={<Pagination {...paginationProps} />}
             onRowClick={({ detail }) => {
               const s = detail.item as MemorySession;
-              router.push(
-                `/memories/${memoryId}/actors/${encodeURIComponent(actorId)}/sessions/${s.sessionId}`
-              );
+              navigateToSession(s.sessionId);
             }}
             empty={
               <Box textAlign="center">
