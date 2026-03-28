@@ -6,6 +6,9 @@ import Button from "@cloudscape-design/components/button";
 import Spinner from "@cloudscape-design/components/spinner";
 import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
+import Avatar from "@cloudscape-design/chat-components/avatar";
+import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
+import CodeView from "@cloudscape-design/code-view/code-view";
 import { Event } from "@/types";
 
 interface EventChatViewProps {
@@ -23,35 +26,65 @@ function formatTimestamp(ts: string | null): string | null {
   }
 }
 
-function ChatBubble({ role, content }: { role: string; content: string }) {
+function tryParseJson(content: string): object | null {
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed !== null && typeof parsed === "object") {
+      return parsed;
+    }
+  } catch {
+    // not JSON
+  }
+  return null;
+}
+
+function ChatMessageBubble({ role, content }: { role: string; content: string }) {
   const normalizedRole = role.toUpperCase();
   const isUser = normalizedRole === "USER" || normalizedRole === "HUMAN";
+  const isSystem = normalizedRole === "SYSTEM";
+
+  let avatarInitial = "A";
+  if (isUser) avatarInitial = "U";
+  if (isSystem) avatarInitial = "S";
+
+  const parsed = tryParseJson(content);
+  const prettyJson = parsed ? JSON.stringify(parsed, null, 2) : null;
+
   return (
     <div
       style={{
         display: "flex",
-        justifyContent: isUser ? "flex-start" : "flex-end",
-        margin: "4px 0",
+        flexDirection: "column",
+        alignItems: isUser ? "flex-end" : "flex-start",
+        marginBottom: "12px",
+        gap: "6px",
       }}
     >
-      <div
-        data-testid="chat-bubble"
-        style={{
-          maxWidth: "75%",
-          padding: "8px 12px",
-          borderRadius: "12px",
-          backgroundColor: isUser ? "#3d3d3d" : "#0972d3",
-          color: "#fff",
-          fontSize: "14px",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        <Box variant="small" color="inherit">
-          {role}
-        </Box>
-        {content}
+      {/* Chat bubble: just shows the role label, stays compact */}
+      <div style={{ maxWidth: "70%" }}>
+        <ChatBubble
+          type={isUser ? "outgoing" : "incoming"}
+          avatar={<Avatar initials={avatarInitial} ariaLabel={`${role} avatar`} />}
+          ariaLabel={`${role} message`}
+        >
+          <Box variant="small" color="text-body-secondary">
+            {role}
+          </Box>
+          {/* Only show plain text inside the bubble, not JSON */}
+          {!prettyJson && (
+            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", marginTop: "4px" }}>
+              {content}
+            </div>
+          )}
+        </ChatBubble>
       </div>
+
+      {/* JSON rendered separately at full width below bubble */}
+      {prettyJson && (
+        <div style={{ width: "100%", maxHeight: "220px", overflowY: "auto", overflowX: "auto" }}>
+          <CodeView content={prettyJson} lineNumbers={true} wrapLines={true} />
+        </div>
+      )}
     </div>
   );
 }
@@ -97,7 +130,7 @@ export default function EventChatView({
         >
           <SpaceBetween direction="vertical" size="xs">
             {event.messages.map((msg, i) => (
-              <ChatBubble key={i} role={msg.role} content={msg.content} />
+              <ChatMessageBubble key={i} role={msg.role} content={msg.content} />
             ))}
           </SpaceBetween>
         </Container>

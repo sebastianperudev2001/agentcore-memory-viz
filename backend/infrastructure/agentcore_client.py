@@ -36,21 +36,11 @@ def _normalize_content(value: Any) -> str:
 
     if isinstance(value, str):
         parsed = _safe_json_loads(value)
-        if parsed is not None:
-            return _normalize_content(parsed)
+        if parsed is not None and isinstance(parsed, (dict, list)):
+            return json.dumps(parsed, ensure_ascii=False, default=str)
         return value
 
-    if isinstance(value, list):
-        parts = [_normalize_content(item) for item in value]
-        return "\n".join(part for part in parts if part)
-
-    if isinstance(value, dict):
-        if "text" in value:
-            return _normalize_content(value.get("text"))
-        if "toolUse" in value:
-            return json.dumps(value.get("toolUse"), ensure_ascii=False, default=str)
-        if "toolResult" in value:
-            return json.dumps(value.get("toolResult"), ensure_ascii=False, default=str)
+    if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False, default=str)
 
     return str(value)

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --no-turbo",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -11,8 +11,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@cloudscape-design/components": "^3.0.1235",
-    "@cloudscape-design/global-styles": "^1.0.52",
+    "@cloudscape-design/chat-components": "^1.0.107",
+    "@cloudscape-design/code-view": "^3.0.112",
+    "@cloudscape-design/components": "^3.0.1253",
+    "@cloudscape-design/global-styles": "^1.0.54",
     "next": "16.1.7",
     "react": "19.2.3",
     "react-dom": "19.2.3"
