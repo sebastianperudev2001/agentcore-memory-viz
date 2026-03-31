@@ -6,6 +6,7 @@ import Button from "@cloudscape-design/components/button";
 import Spinner from "@cloudscape-design/components/spinner";
 import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
+import Cards from "@cloudscape-design/components/cards";
 import Avatar from "@cloudscape-design/chat-components/avatar";
 import ChatBubble from "@cloudscape-design/chat-components/chat-bubble";
 import CodeView from "@cloudscape-design/code-view/code-view";
@@ -102,8 +103,47 @@ export default function EventChatView({
     return <Box textAlign="center">No events found for this session.</Box>;
   }
 
+  const counts = events.reduce(
+    (acc, event) => {
+      event.messages.forEach((msg) => {
+        const r = msg.role.toUpperCase();
+        if (r === "USER" || r === "HUMAN") acc.user += 1;
+        else if (r === "SYSTEM") acc.system += 1;
+        else acc.assistant += 1;
+      });
+      return acc;
+    },
+    { user: 0, system: 0, assistant: 0 }
+  );
+
   return (
     <SpaceBetween direction="vertical" size="m">
+      <Cards
+        cardDefinition={{
+          header: (item) => (
+            <Box variant="h3">{item.role}</Box>
+          ),
+          sections: [
+            {
+              id: "count",
+              header: "Messages",
+              content: (item) => (
+                <Box variant="awsui-key-label" fontSize="heading-xl">
+                  {item.count}
+                </Box>
+              ),
+            },
+          ],
+        }}
+        cardsPerRow={[{ cards: 3 }]}
+        items={[
+          { role: "User", count: counts.user },
+          { role: "Assistant", count: counts.assistant },
+          { role: "System", count: counts.system },
+        ]}
+        trackBy="role"
+        ariaLabels={{ itemSelectionLabel: (_e, i) => i.role, selectionGroupLabel: "Message counts" }}
+      />
       {events.map((event) => (
         <Container
           key={event.eventId}
