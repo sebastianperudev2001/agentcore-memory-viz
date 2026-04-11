@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import APIRouter
 import fastapi_swagger_dark as fsd
-from api.routers import memories, sessions, events, memory_records, actors
+from api.routers import agent_runtimes, memories, sessions, events, memory_records, actors
 
 
 app = FastAPI(
@@ -28,6 +28,7 @@ app.include_router(sessions.router)
 app.include_router(events.router)
 app.include_router(memory_records.router)
 app.include_router(actors.router)
+app.include_router(agent_runtimes.router)
 
 
 @app.get("/health")

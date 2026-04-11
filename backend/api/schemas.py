@@ -53,3 +53,13 @@ class ActorListResponse(BaseModel):
     actorIds: List[str]
     nextToken: Optional[str] = None
     count: int
+
+
+class AgentRuntimeResponse(BaseModel):
+    agentRuntimeArn: str
+    agentRuntimeId: str
+    agentRuntimeVersion: str
+    agentRuntimeName: str
+    description: str
+    lastUpdatedAt: Optional[datetime] = None
+    status: str

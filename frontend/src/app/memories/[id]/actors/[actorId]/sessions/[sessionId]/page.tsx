@@ -9,12 +9,21 @@ import { useEvents } from "@/hooks/useEvents";
 import { useMemoryRecords } from "@/hooks/useMemoryRecords";
 
 export default function SessionEventPage() {
-  const params = useParams<{ id: string; actorId: string; sessionId: string }>();
+  const params = useParams<{
+    id: string;
+    actorId: string;
+    sessionId: string;
+  }>();
   const memoryId = params.id;
   const actorId = params.actorId;
   const sessionId = params.sessionId;
 
-  const { events, loading: eventsLoading, fetchEvents, deleteEvent } = useEvents();
+  const {
+    events,
+    loading: eventsLoading,
+    fetchEvents,
+    deleteEvent,
+  } = useEvents();
   const { records, loading: recordsLoading, fetchRecords } = useMemoryRecords();
 
   useEffect(() => {
@@ -57,11 +66,13 @@ export default function SessionEventPage() {
           loading={eventsLoading}
           onDelete={handleDelete}
         />
+        {/**
         <MemoryRecordsPanel
           records={records}
           loading={recordsLoading}
           onFetch={(ns) => fetchRecords(memoryId, ns)}
         />
+         */}
       </div>
     </AppShell>
   );

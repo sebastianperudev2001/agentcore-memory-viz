@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 import boto3
 from bedrock_agentcore.memory import MemoryClient
 
+from domain.agent_runtime import AgentRuntime
 from domain.event import Branch, Event, Message
 from domain.memory_record import MemoryRecord
 from domain.memory_resource import MemoryResource
@@ -71,6 +72,9 @@ class AgentCoreRepository:
             region_name=region,
         )
         self.agentcore_client = session.client("bedrock-agentcore", region_name=region)
+        self.agentcore_control_client = session.client(
+            "bedrock-agentcore-control", region_name=region
+        )
         self.client = MemoryClient(region_name=region, boto3_session=session)
 
     async def list_memories(self) -> List[MemoryResource]:
@@ -93,6 +97,25 @@ class AgentCoreRepository:
                 )
             )
         return resources
+
+    async def list_agent_runtimes(self) -> List[AgentRuntime]:
+        agent_runtimes: List[AgentRuntime] = []
+        next_token: Optional[str] = None
+
+        while True:
+            kwargs: Dict[str, Any] = {}
+            if next_token:
+                kwargs["nextToken"] = next_token
+
+            response = self.agentcore_control_client.list_agent_runtimes(**kwargs)
+            for runtime in response.get("agentRuntimes", []):
+                agent_runtimes.append(self._map_agent_runtime(runtime))
+
+            next_token = response.get("nextToken")
+            if not next_token:
+                break
+
+        return agent_runtimes
 
     async def list_actors(
         self,
@@ -210,6 +233,19 @@ class AgentCoreRepository:
                 break
             kwargs["nextToken"] = next_token
         return records
+
+    @staticmethod
+    def _map_agent_runtime(raw: dict) -> AgentRuntime:
+        dt = raw.get("lastUpdatedAt")
+        return AgentRuntime(
+            agentRuntimeArn=raw.get("agentRuntimeArn", ""),
+            agentRuntimeId=raw.get("agentRuntimeId", ""),
+            agentRuntimeVersion=raw.get("agentRuntimeVersion", ""),
+            agentRuntimeName=raw.get("agentRuntimeName", ""),
+            description=raw.get("description", ""),
+            lastUpdatedAt=dt if isinstance(dt, datetime) else _parse_dt(dt),
+            status=raw.get("status", ""),
+        )
 
     @staticmethod
     def _map_event(raw: dict) -> Event:
