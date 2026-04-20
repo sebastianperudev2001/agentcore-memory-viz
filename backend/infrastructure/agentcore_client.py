@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 from bedrock_agentcore.memory import MemoryClient
@@ -182,6 +182,45 @@ class AgentCoreRepository:
         raw = response.get("event", response) if isinstance(response, dict) else response
         return self._map_event(raw)
 
+    async def create_event(
+        self,
+        memory_id: str,
+        actor_id: str,
+        session_id: str,
+        messages: List[Tuple[str, str]],
+        event_timestamp: Optional[datetime] = None,
+    ) -> Event:
+        """Create a conversational event under (memory_id, actor_id, session_id).
+
+        Sessions are created implicitly in AgentCore Memory on first event write.
+        """
+        ts = event_timestamp or datetime.now(timezone.utc)
+        payload = [
+            {
+                "conversational": {
+                    "role": role,
+                    "content": {"text": content},
+                }
+            }
+            for role, content in messages
+        ]
+        response = self.agentcore_client.create_event(
+            memoryId=memory_id,
+            actorId=actor_id,
+            sessionId=session_id,
+            eventTimestamp=ts,
+            payload=payload,
+        )
+        raw = response.get("event", response) if isinstance(response, dict) else response
+        # AgentCore create_event response typically doesn't echo back the payload;
+        # fall back to the input messages so the returned Event is useful.
+        if not raw.get("payload"):
+            raw = {**raw, "payload": payload}
+        raw.setdefault("memoryId", memory_id)
+        raw.setdefault("actorId", actor_id)
+        raw.setdefault("sessionId", session_id)
+        return self._map_event(raw)
+
     async def delete_event(
         self, memory_id: str, actor_id: str, session_id: str, event_id: str
     ) -> dict:
@@ -210,6 +249,7 @@ class AgentCoreRepository:
         kwargs: dict = {"memoryId": memory_id, "namespace": namespace}
         while True:
             response = self.client.list_memory_records(**kwargs)
+            print(response)
             for r in response.get("memoryRecordSummaries", []):
                 # content is a dict with a "text" key
                 content_obj = r.get("content", {})

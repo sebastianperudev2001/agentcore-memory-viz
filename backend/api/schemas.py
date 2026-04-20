@@ -42,6 +42,27 @@ class EventResponse(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class BulkEventMessage(BaseModel):
+    role: str  # USER | ASSISTANT | TOOL
+    content: str
+
+
+class BulkEventItem(BaseModel):
+    messages: List[BulkEventMessage]
+    event_timestamp: Optional[datetime] = None
+
+
+class BulkSeedEventsRequest(BaseModel):
+    actor_id: str
+    session_id: Optional[str] = None  # auto-generated (uuid4 hex) if missing
+    events: List[BulkEventItem]
+
+
+class BulkSeedEventsResponse(BaseModel):
+    session_id: str
+    events: List[EventResponse]
+
+
 class MemoryRecordResponse(BaseModel):
     record_id: str
     content: str

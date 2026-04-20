@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import AppShell from "@/components/AppShell";
-import SessionList from "@/components/session/SessionList";
+import SessionsWithPreferences from "@/components/session/SessionsWithPreferences";
 
 export const metadata: Metadata = {
   title: "Sessions — AgentCore Memory Viz",
@@ -25,7 +25,7 @@ export default async function ActorSessionsPage({
         },
       ]}
     >
-      <SessionList memoryId={id} actorId={actorId} />
+      <SessionsWithPreferences memoryId={id} actorId={actorId} />
     </AppShell>
   );
 }

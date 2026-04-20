@@ -5,6 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Query
 
 from api.schemas import BranchResponse, MemorySessionResponse, EventResponse, MessageResponse
+from api.routers._identifiers import normalize_identifier
 from application.session_service import SessionService
 from infrastructure.agentcore_client import AgentCoreRepository
 
@@ -21,7 +22,7 @@ async def list_sessions(
     actor_id: Optional[str] = Query(None, description="Actor ID to filter sessions by"),
 ):
     service = get_service()
-    sessions = await service.list_sessions(memory_id, actor_id)
+    sessions = await service.list_sessions(memory_id, normalize_identifier(actor_id))
     return [MemorySessionResponse(**s.__dict__) for s in sessions]
 
 
@@ -32,7 +33,11 @@ async def delete_session(
     actor_id: str = Query(..., description="Actor ID to delete session for"),
 ):
     service = get_service()
-    deleted_events = await service.delete_session(memory_id, actor_id, session_id)
+    deleted_events = await service.delete_session(
+        memory_id,
+        normalize_identifier(actor_id),
+        session_id,
+    )
     return [
         EventResponse(
             event_id=e.event_id,

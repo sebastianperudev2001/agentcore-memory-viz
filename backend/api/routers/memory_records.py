@@ -4,6 +4,7 @@ from typing import List
 
 from fastapi import APIRouter, Query
 
+from api.routers._identifiers import normalize_identifier
 from api.schemas import MemoryRecordResponse
 from application.memory_record_service import MemoryRecordService
 from infrastructure.agentcore_client import AgentCoreRepository
@@ -21,5 +22,6 @@ async def list_memory_records(
     namespace: str = Query("/", description="Namespace to list records from"),
 ):
     service = get_service()
-    records = await service.list_memory_records(memory_id, namespace)
+    clean_namespace = normalize_identifier(namespace) or "/"
+    records = await service.list_memory_records(memory_id, clean_namespace)
     return [MemoryRecordResponse(**r.__dict__) for r in records]

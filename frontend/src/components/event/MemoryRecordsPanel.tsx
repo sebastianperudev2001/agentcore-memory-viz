@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import FormField from "@cloudscape-design/components/form-field";
-import Input from "@cloudscape-design/components/input";
-import Button from "@cloudscape-design/components/button";
 import Spinner from "@cloudscape-design/components/spinner";
 import Box from "@cloudscape-design/components/box";
 import Badge from "@cloudscape-design/components/badge";
+import ExpandableSection from "@cloudscape-design/components/expandable-section";
 import { MemoryRecord } from "@/types";
 
 function formatTimestamp(ts: string | null): string | null {
@@ -24,38 +21,17 @@ function formatTimestamp(ts: string | null): string | null {
 interface MemoryRecordsPanelProps {
   records: MemoryRecord[];
   loading: boolean;
-  onFetch: (namespace: string) => void;
+  title?: string;
 }
 
 export default function MemoryRecordsPanel({
   records,
   loading,
-  onFetch,
+  title = "Memory Records",
 }: MemoryRecordsPanelProps) {
-  const [namespace, setNamespace] = useState("/");
-
   return (
-    <Container header={<Header variant="h2">Memory Records</Header>}>
-      <SpaceBetween direction="vertical" size="m">
-        <SpaceBetween direction="horizontal" size="s">
-          <FormField label="Namespace">
-            <Input
-              value={namespace}
-              onChange={({ detail }) => setNamespace(detail.value)}
-              placeholder="/"
-            />
-          </FormField>
-          <div style={{ paddingTop: "24px" }}>
-            <Button
-              variant="primary"
-              onClick={() => onFetch(namespace)}
-              loading={loading}
-            >
-              Load
-            </Button>
-          </div>
-        </SpaceBetween>
-
+    <Container header={<Header variant="h2">{title}</Header>}>
+      <ExpandableSection headerText={title} defaultExpanded>
         {loading ? (
           <Spinner size="normal" />
         ) : records.length === 0 ? (
@@ -84,7 +60,7 @@ export default function MemoryRecordsPanel({
             ))}
           </SpaceBetween>
         )}
-      </SpaceBetween>
+      </ExpandableSection>
     </Container>
   );
 }

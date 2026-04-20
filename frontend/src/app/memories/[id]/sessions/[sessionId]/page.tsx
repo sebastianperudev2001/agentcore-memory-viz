@@ -21,7 +21,7 @@ export default function SessionEventPage() {
   useEffect(() => {
     if (memoryId && actorId && sessionId) {
       fetchEvents(memoryId, actorId, sessionId);
-      fetchRecords(memoryId, "/");
+      fetchRecords(memoryId, `/summaries/${actorId}/${sessionId}`);
     }
   }, [memoryId, actorId, sessionId, fetchEvents, fetchRecords]);
 
@@ -50,7 +50,7 @@ export default function SessionEventPage() {
         <MemoryRecordsPanel
           records={records}
           loading={recordsLoading}
-          onFetch={(ns) => fetchRecords(memoryId, ns)}
+          title="Summaries"
         />
       </div>
     </AppShell>
