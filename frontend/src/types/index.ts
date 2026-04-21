@@ -39,3 +39,24 @@ export interface ActorListResponse {
   nextToken: string | null;
   count: number;
 }
+
+export interface BulkSeedMessage {
+  role: string;
+  content: string;
+}
+
+export interface BulkSeedEventItem {
+  messages: BulkSeedMessage[];
+  event_timestamp?: string;
+}
+
+export interface BulkSeedEventsRequest {
+  actor_id: string;
+  session_id?: string;
+  events: BulkSeedEventItem[];
+}
+
+export interface BulkSeedEventsResponse {
+  session_id: string;
+  events: Event[];
+}
