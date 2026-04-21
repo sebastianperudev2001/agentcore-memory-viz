@@ -1,4 +1,4 @@
-import { Event, Message } from "@/types";
+import { Event, Message, BulkSeedEventsRequest, BulkSeedEventsResponse } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -50,6 +50,34 @@ export async function fetchEvent(
   );
   if (!res.ok) throw new Error(`Failed to fetch event: ${res.status}`);
   return mapEvent(await res.json());
+}
+
+interface BulkSeedEventsApiResponse {
+  session_id: string;
+  events: EventApiResponse[];
+}
+
+export async function bulkSeedEvents(
+  memoryId: string,
+  request: BulkSeedEventsRequest
+): Promise<BulkSeedEventsResponse> {
+  const res = await fetch(
+    `${BASE_URL}/memories/${encodeURIComponent(memoryId)}/events/bulk`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `Request failed: ${res.status}`);
+  }
+  const data: BulkSeedEventsApiResponse = await res.json();
+  return {
+    session_id: data.session_id,
+    events: data.events.map(mapEvent),
+  };
 }
 
 export async function deleteEvent(
