@@ -15,6 +15,7 @@ import Autosuggest from "@cloudscape-design/components/autosuggest";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import { useSessions } from "@/hooks/useSessions";
 import { MemorySession } from "@/types";
+import InsertEventsModal from "./InsertEventsModal";
 
 interface SessionListProps {
   memoryId: string;
@@ -23,6 +24,7 @@ interface SessionListProps {
 
 export default function SessionList({ memoryId, actorId }: SessionListProps) {
   const [searchValue, setSearchValue] = useState("");
+  const [insertModalVisible, setInsertModalVisible] = useState(false);
   const { sessions, loading, error, fetchSessions } = useSessions(memoryId);
   const router = useRouter();
 
@@ -100,13 +102,22 @@ export default function SessionList({ memoryId, actorId }: SessionListProps) {
         <Header
           variant="h1"
           actions={
-            <Button
-              iconName="refresh"
-              onClick={() => fetchSessions(actorId)}
-              loading={loading}
-            >
-              Refresh
-            </Button>
+            <SpaceBetween direction="horizontal" size="xs">
+              <Button
+                iconName="refresh"
+                onClick={() => fetchSessions(actorId)}
+                loading={loading}
+              >
+                Refresh
+              </Button>
+              <Button
+                variant="primary"
+                iconName="add-plus"
+                onClick={() => setInsertModalVisible(true)}
+              >
+                Insert Events
+              </Button>
+            </SpaceBetween>
           }
         >
           Sessions for {memoryId} / {actorId}
@@ -150,6 +161,15 @@ export default function SessionList({ memoryId, actorId }: SessionListProps) {
           />
         )}
       </SpaceBetween>
+      <InsertEventsModal
+        memoryId={memoryId}
+        visible={insertModalVisible}
+        onDismiss={() => setInsertModalVisible(false)}
+        onSuccess={() => {
+          setInsertModalVisible(false);
+          fetchSessions(actorId);
+        }}
+      />
     </ContentLayout>
   );
 }
